@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dean Page</title>
+</head>
+<body>
+    <h2>Welcome, Dean Name</h2>
+    <h3>Department Exam Schedules</h3>
+    <form action="view_department_exams.php" method="post">
+        <label for="department">Department:</label>
+        <select id="department" name="department">
+            <!-- Populate options from the database -->
+            <option value="1">Computer Engineering</option>
+            <option value="2">Electrical Engineering</option>
+            <option value="3">Physics</option>
+        </select><br>
+        <input type="submit" value="View Exams">
+    </form>
+
+    <h3>Exam Schedule</h3>
+    <table border="1">
+        <tr>
+            <th>Exam Date</th>
+            <th>Exam Time</th>
+            <th>Exam Name</th>
+        </tr>
+        <!-- Populate table with data from the database -->
+    </table>
+</body>
+</html>
