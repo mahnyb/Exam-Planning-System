@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -8,11 +9,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $exam_time = $_POST['exam_time'];
     $num_classes = $_POST['num_classes'];
 
-    $query = "INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUES ('$course_id', '$exam_name', '$exam_date', '$exam_time', '$num_classes')";
-    if (mysqli_query($conn, $query)) {
+    // Insert new exam
+    $insert_query = "INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUES ('$course_id', '$exam_name', '$exam_date', '$exam_time', '$num_classes')";
+    if (mysqli_query($conn, $insert_query)) {
         echo "Exam inserted successfully.";
     } else {
-        echo "Error: " . $query . "<br>" . mysqli_error($conn);
+        echo "Error: " . $insert_query . "<br>" . mysqli_error($conn);
     }
 }
 ?>
