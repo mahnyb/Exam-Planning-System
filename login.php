@@ -21,8 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             case 'Secretary':
                 header('Location: secretary.php');
                 break;
-            // Add other cases for different roles
+            case 'Head of Department':
+                header('Location: head_of_department.php');
+                break;
+            case 'Head of Secretary':
+                header('Location: head_of_secretary.php');
+                break;
+            case 'Dean':
+                header('Location: dean.php');
+                break;
         }
+        exit();
     } else {
         echo "Invalid username or password.";
     }
