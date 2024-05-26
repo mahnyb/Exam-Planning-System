@@ -10,6 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $query = "SELECT * FROM Employee WHERE name='$username' AND password='$password'";
     $result = mysqli_query($conn, $query);
 
+    if (!$result) {
+        // Print SQL error
+        echo "Error: " . mysqli_error($conn);
+        exit();
+    }
+
     if (mysqli_num_rows($result) == 1) {
         $_SESSION['username'] = $username;
         // Redirect based on role

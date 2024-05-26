@@ -22,6 +22,7 @@ CREATE TABLE Department (
 CREATE TABLE Employee (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     role ENUM('Assistant', 'Secretary', 'Head of Department', 'Head of Secretary', 'Dean') NOT NULL,
     department_id INT,
     FOREIGN KEY (department_id) REFERENCES Department(department_id)
@@ -49,6 +50,8 @@ CREATE TABLE Exam (
 -- Insert sample data
 INSERT INTO Faculty (faculty_name) VALUES ('Engineering'), ('Science'), ('Arts');
 INSERT INTO Department (department_name, faculty_id) VALUES ('Computer Engineering', 1), ('Electrical Engineering', 1), ('Physics', 2);
-INSERT INTO Employee (name, role, department_id) VALUES ('John Doe', 'Assistant', 1), ('Jane Smith', 'Secretary', 1), ('Alice Johnson', 'Head of Department', 1);
+INSERT INTO Employee (name, password, role, department_id) VALUES ('John Doe', 'password123', 'Assistant', 1);
+INSERT INTO Employee (name, password, role, department_id) VALUES ('Jane Smith', 'password123', 'Secretary', 1);
+INSERT INTO Employee (name, password, role, department_id) VALUES ('Alice Johnson', 'password123', 'Head of Department', 1);
 INSERT INTO Courses (course_name, department_id) VALUES ('CSE348', 1), ('EEE101', 2), ('PHY201', 3);
 INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUES (1, 'CSE348 Final', '2024-04-30', '18:00:00', 2);
