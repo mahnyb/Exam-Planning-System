@@ -11,6 +11,11 @@ if (!isset($_SESSION['username'])) {
 $assistant_name = $_SESSION['username'];
 $query = "SELECT * FROM Employee WHERE name='$assistant_name'";
 $result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Error fetching assistant details: " . mysqli_error($conn));
+}
+
 $assistant = mysqli_fetch_assoc($result);
 $assistant_id = $assistant['employee_id'];
 
@@ -19,15 +24,27 @@ $department_id = $assistant['department_id'];
 $courses_query = "SELECT * FROM Courses WHERE department_id='$department_id'";
 $courses_result = mysqli_query($conn, $courses_query);
 
+if (!$courses_result) {
+    die("Error fetching courses: " . mysqli_error($conn));
+}
+
 // Fetch exams for the assistant's department
 $exams_query = "SELECT * FROM Exam WHERE course_id IN (SELECT course_id FROM Courses WHERE department_id='$department_id')";
 $exams_result = mysqli_query($conn, $exams_query);
+
+if (!$exams_result) {
+    die("Error fetching exams: " . mysqli_error($conn));
+}
 
 // Fetch assistant's course selections
 $selected_courses_query = "SELECT Courses.course_name, Courses.course_id FROM AssistantCourses 
                            JOIN Courses ON AssistantCourses.course_id = Courses.course_id 
                            WHERE AssistantCourses.assistant_id='$assistant_id'";
 $selected_courses_result = mysqli_query($conn, $selected_courses_query);
+
+if (!$selected_courses_result) {
+    die("Error fetching selected courses: " . mysqli_error($conn));
+}
 
 // Create a weekly plan array
 $weekly_plan = [];

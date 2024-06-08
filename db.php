@@ -1,9 +1,10 @@
 <?php
 $servername = "localhost";
-$username = "root"; 
-$password = "mysql"; 
+$username = "root";  
+$password = "mysql";  
 $dbname = "ExamPlanningSystem";
 
+// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
