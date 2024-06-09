@@ -24,7 +24,7 @@ $courses_stmt->execute();
 $courses_result = $courses_stmt->get_result();
 
 // Fetch assistants for the secretary's department
-$assistants_sql = "SELECT employee_id, first_name, last_name, score FROM Employee WHERE department_id = ? AND role = 'Assistant' ORDER BY score ASC";
+$assistants_sql = "SELECT employee_id, first_name, last_name FROM Employee WHERE department_id = ? AND role = 'Assistant'";
 $assistants_stmt = $conn->prepare($assistants_sql);
 if ($assistants_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
@@ -33,31 +33,6 @@ $assistants_stmt->bind_param("i", $department_id);
 $assistants_stmt->execute();
 $assistants_result = $assistants_stmt->get_result();
 $assistants = $assistants_result->fetch_all(MYSQLI_ASSOC);
-
-// Fetch departments for course insertion
-$departments_sql = "SELECT department_id, department_name FROM Department";
-$departments_result = $conn->query($departments_sql);
-
-// Fetch faculties for course insertion
-$faculties_sql = "SELECT faculty_id, faculty_name FROM Faculty";
-$faculties_result = $conn->query($faculties_sql);
-
-// Handle course insertion
-if (isset($_POST['insert_course'])) {
-    $course_name = $_POST['course_name'];
-    $selected_department_id = $_POST['department_id'];
-
-    $insert_course_sql = "INSERT INTO Courses (course_name, department_id) VALUES (?, ?)";
-    $insert_course_stmt = $conn->prepare($insert_course_sql);
-    if ($insert_course_stmt === false) {
-        die('Prepare failed: ' . htmlspecialchars($conn->error));
-    }
-    $insert_course_stmt->bind_param("si", $course_name, $selected_department_id);
-    $insert_course_stmt->execute();
-
-    header("Location: secretary_page.php");
-    exit();
-}
 
 // Handle exam scheduling
 if (isset($_POST['schedule_exam'])) {
@@ -126,18 +101,6 @@ if (isset($_POST['schedule_exam'])) {
         echo "Error: Selected assistants have intersecting courses.";
     }
 }
-
-// Fetch assistant scores
-$scores_sql = "SELECT first_name, last_name, score FROM Employee WHERE department_id = ? AND role = 'Assistant' ORDER BY score ASC";
-$scores_stmt = $conn->prepare($scores_sql);
-if ($scores_stmt === false) {
-    die('Prepare failed: ' . htmlspecialchars($conn->error));
-}
-$scores_stmt->bind_param("i", $department_id);
-$scores_stmt->execute();
-$scores_result = $scores_stmt->get_result();
-$assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
-
 ?>
 
 <!DOCTYPE html>
@@ -148,28 +111,6 @@ $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
 </head>
 <body>
     <h1>Welcome, <?php echo $first_name . " " . $last_name; ?></h1>
-    
-    <h2>Insert Course</h2>
-    <form action="secretary_page.php" method="post">
-        <label for="faculty_id">Faculty:</label>
-        <select id="faculty_id" name="faculty_id" required>
-            <?php while ($faculty = $faculties_result->fetch_assoc()) { ?>
-                <option value="<?php echo $faculty['faculty_id']; ?>"><?php echo $faculty['faculty_name']; ?></option>
-            <?php } ?>
-        </select>
-        <br>
-        <label for="department_id">Department:</label>
-        <select id="department_id" name="department_id" required>
-            <?php while ($department = $departments_result->fetch_assoc()) { ?>
-                <option value="<?php echo $department['department_id']; ?>"><?php echo $department['department_name']; ?></option>
-            <?php } ?>
-        </select>
-        <br>
-        <label for="course_name">Course Name:</label>
-        <input type="text" id="course_name" name="course_name" required>
-        <br>
-        <button type="submit" name="insert_course">Insert Course</button>
-    </form>
 
     <h2>Schedule Exam</h2>
     <form action="secretary_page.php" method="post">
@@ -201,19 +142,5 @@ $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
         <br>
         <button type="submit" name="schedule_exam">Schedule Exam</button>
     </form>
-
-    <h2>Assistant Scores</h2>
-    <table border="1">
-        <tr>
-            <th>Assistant Name</th>
-            <th>Score</th>
-        </tr>
-        <?php foreach ($assistant_scores as $score) { ?>
-            <tr>
-                <td><?php echo $score['first_name'] . " " . $score['last_name']; ?></td>
-                <td><?php echo $score['score']; ?></td>
-            </tr>
-        <?php } ?>
-    </table>
 </body>
 </html>

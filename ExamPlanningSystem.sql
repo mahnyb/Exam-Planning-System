@@ -6,6 +6,7 @@ USE ExamPlanningSystem;
 
 -- Drop tables if they exist to avoid conflicts
 DROP TABLE IF EXISTS AssistantCourses;
+DROP TABLE IF EXISTS ExamAssistants;
 DROP TABLE IF EXISTS Exam;
 DROP TABLE IF EXISTS Courses;
 DROP TABLE IF EXISTS Employee;
@@ -67,6 +68,15 @@ CREATE TABLE AssistantCourses (
     course_id INT,
     FOREIGN KEY (employee_id) REFERENCES Employee(employee_id),
     FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+-- Create ExamAssistants Table
+CREATE TABLE ExamAssistants (
+    exam_assistant_id INT AUTO_INCREMENT PRIMARY KEY,
+    exam_id INT,
+    assistant_id INT,
+    FOREIGN KEY (exam_id) REFERENCES Exam(exam_id),
+    FOREIGN KEY (assistant_id) REFERENCES Employee(employee_id)
 );
 
 -- Insert sample data into Faculty
