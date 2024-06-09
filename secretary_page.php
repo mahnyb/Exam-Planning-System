@@ -24,7 +24,7 @@ $courses_stmt->execute();
 $courses_result = $courses_stmt->get_result();
 
 // Fetch assistants for the secretary's department
-$assistants_sql = "SELECT employee_id, first_name, last_name FROM Employee WHERE department_id = ? AND role = 'Assistant'";
+$assistants_sql = "SELECT employee_id, first_name, last_name, score FROM Employee WHERE department_id = ? AND role = 'Assistant' ORDER BY score ASC";
 $assistants_stmt = $conn->prepare($assistants_sql);
 if ($assistants_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
@@ -41,7 +41,17 @@ if (isset($_POST['schedule_exam'])) {
     $exam_date = $_POST['exam_date'];
     $exam_time = $_POST['exam_time'];
     $num_classes = $_POST['num_classes'];
-    $selected_assistants = $_POST['assistants'];
+    $num_assistants = $_POST['num_assistants'];
+
+    // Select assistants with the lowest scores
+    $selected_assistants = [];
+    $count = 0;
+    foreach ($assistants as $assistant) {
+        if ($count < $num_assistants && $assistant['score'] != -1) {
+            $selected_assistants[] = $assistant['employee_id'];
+            $count++;
+        }
+    }
 
     // Check for intersecting courses for selected assistants
     $intersecting_assistants = [];
@@ -133,12 +143,8 @@ if (isset($_POST['schedule_exam'])) {
         <label for="num_classes">Number of Classes:</label>
         <input type="number" id="num_classes" name="num_classes" required>
         <br>
-        <label for="assistants">Select Assistants:</label>
-        <select id="assistants" name="assistants[]" multiple required>
-            <?php foreach ($assistants as $assistant) { ?>
-                <option value="<?php echo $assistant['employee_id']; ?>"><?php echo $assistant['first_name'] . " " . $assistant['last_name']; ?></option>
-            <?php } ?>
-        </select>
+        <label for="num_assistants">Number of Assistants:</label>
+        <input type="number" id="num_assistants" name="num_assistants" required>
         <br>
         <button type="submit" name="schedule_exam">Schedule Exam</button>
     </form>
