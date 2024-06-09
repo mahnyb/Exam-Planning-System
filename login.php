@@ -3,33 +3,52 @@ session_start();
 require_once 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-
-    // Debugging: Output the received username and password
-    error_log("Username: $username");
-    error_log("Password: $password");
-
-    $sql = "SELECT * FROM Employee WHERE username = ? AND password = ? LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $username, $password);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    // Debugging: Output the fetched user data
-    error_log("User data: " . print_r($user, true));
-
-    if ($user) {
-        $_SESSION['user_id'] = $user['employee_id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
-        $_SESSION['first_name'] = $user['first_name'];
-        $_SESSION['last_name'] = $user['last_name'];
-        header("Location: assistant.php");
+    if (isset($_POST['forgot_password'])) {
+        // Handle the "Forgot password" functionality
+        header("Location: reset_password.php"); // Redirect to a simple reset password page
         exit();
     } else {
-        $error = "Invalid username or password.";
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        $sql = "SELECT * FROM Employee WHERE username = ? AND password = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ss", $username, $password);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+
+        if ($user) {
+            $_SESSION['user_id'] = $user['employee_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['first_name'] = $user['first_name'];
+            $_SESSION['last_name'] = $user['last_name'];
+            $_SESSION['department_id'] = $user['department_id']; // Add this line
+
+            switch ($user['role']) {
+                case 'Assistant':
+                    header("Location: assistant.php");
+                    break;
+                case 'Secretary':
+                    header("Location: secretary_page.php");
+                    break;
+                case 'Head of Department':
+                    header("Location: head_of_department.php");
+                    break;
+                case 'Head of Secretary':
+                    header("Location: head_of_secretary.php");
+                    break;
+                case 'Dean':
+                    header("Location: dean.php");
+                    break;
+                default:
+                    $error = "Invalid user role.";
+            }
+            exit();
+        } else {
+            $error = "Invalid username or password.";
+        }
     }
 }
 ?>
@@ -53,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <input type="password" id="password" name="password" required>
         <br>
         <button type="submit">Login</button>
+        <button type="submit" name="forgot_password">Forgot Password</button>
     </form>
 </body>
 </html>

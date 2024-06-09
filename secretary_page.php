@@ -2,8 +2,8 @@
 session_start();
 include 'db.php';
 
-// Check if the user is logged in and is the Head of Secretary
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Head of Secretary') {
+// Check if the user is logged in and is a Secretary
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Secretary') {
     header("Location: login.php");
     exit();
 }
@@ -11,35 +11,32 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Head of Secretary') {
 $user_id = $_SESSION['user_id'];
 $first_name = $_SESSION['first_name'];
 $last_name = $_SESSION['last_name'];
-$faculty_id = isset($_SESSION['faculty_id']) ? $_SESSION['faculty_id'] : 0; // Set default value
+$department_id = isset($_SESSION['department_id']) ? $_SESSION['department_id'] : 0; // Set default value
 
-// Fetch courses for the head of secretary's faculty
-$courses_sql = "SELECT course_id, course_name FROM Courses WHERE department_id IN (SELECT department_id FROM Department WHERE faculty_id = ?)";
+// Fetch courses for the secretary's department
+$courses_sql = "SELECT course_id, course_name FROM Courses WHERE department_id = ?";
 $courses_stmt = $conn->prepare($courses_sql);
 if ($courses_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
 }
-$courses_stmt->bind_param("i", $faculty_id);
+$courses_stmt->bind_param("i", $department_id);
 $courses_stmt->execute();
 $courses_result = $courses_stmt->get_result();
 
-// Fetch assistants for the faculty
-$assistants_sql = "SELECT employee_id, first_name, last_name, score FROM Employee WHERE department_id IN (SELECT department_id FROM Department WHERE faculty_id = ?) AND role = 'Assistant' ORDER BY score ASC";
+// Fetch assistants for the secretary's department
+$assistants_sql = "SELECT employee_id, first_name, last_name, score FROM Employee WHERE department_id = ? AND role = 'Assistant' ORDER BY score ASC";
 $assistants_stmt = $conn->prepare($assistants_sql);
 if ($assistants_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
 }
-$assistants_stmt->bind_param("i", $faculty_id);
+$assistants_stmt->bind_param("i", $department_id);
 $assistants_stmt->execute();
 $assistants_result = $assistants_stmt->get_result();
 $assistants = $assistants_result->fetch_all(MYSQLI_ASSOC);
 
 // Fetch departments for course insertion
-$departments_sql = "SELECT department_id, department_name FROM Department WHERE faculty_id = ?";
-$departments_stmt = $conn->prepare($departments_sql);
-$departments_stmt->bind_param("i", $faculty_id);
-$departments_stmt->execute();
-$departments_result = $departments_stmt->get_result();
+$departments_sql = "SELECT department_id, department_name FROM Department";
+$departments_result = $conn->query($departments_sql);
 
 // Fetch faculties for course insertion
 $faculties_sql = "SELECT faculty_id, faculty_name FROM Faculty";
@@ -58,7 +55,7 @@ if (isset($_POST['insert_course'])) {
     $insert_course_stmt->bind_param("si", $course_name, $selected_department_id);
     $insert_course_stmt->execute();
 
-    header("Location: head_of_secretary.php");
+    header("Location: secretary_page.php");
     exit();
 }
 
@@ -99,17 +96,17 @@ if (isset($_POST['schedule_exam'])) {
         $update_score_stmt->execute();
     }
 
-    header("Location: head_of_secretary.php");
+    header("Location: secretary_page.php");
     exit();
 }
 
-// Fetch assistant scores for the faculty
-$scores_sql = "SELECT first_name, last_name, score FROM Employee WHERE department_id IN (SELECT department_id FROM Department WHERE faculty_id = ?) AND role = 'Assistant' ORDER BY score ASC";
+// Fetch assistant scores
+$scores_sql = "SELECT first_name, last_name, score FROM Employee WHERE department_id = ? AND role = 'Assistant' ORDER BY score ASC";
 $scores_stmt = $conn->prepare($scores_sql);
 if ($scores_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
 }
-$scores_stmt->bind_param("i", $faculty_id);
+$scores_stmt->bind_param("i", $department_id);
 $scores_stmt->execute();
 $scores_result = $scores_stmt->get_result();
 $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
@@ -126,7 +123,7 @@ $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
     <h1>Welcome, <?php echo $first_name . " " . $last_name; ?></h1>
     
     <h2>Insert Course</h2>
-    <form action="head_of_secretary.php" method="post">
+    <form action="secretary_page.php" method="post">
         <label for="faculty_id">Faculty:</label>
         <select id="faculty_id" name="faculty_id" required>
             <?php while ($faculty = $faculties_result->fetch_assoc()) { ?>
@@ -148,7 +145,7 @@ $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
     </form>
 
     <h2>Schedule Exam</h2>
-    <form action="head_of_secretary.php" method="post">
+    <form action="secretary_page.php" method="post">
         <label for="course_id">Course:</label>
         <select id="course_id" name="course_id" required>
             <?php while ($course = $courses_result->fetch_assoc()) { ?>

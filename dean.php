@@ -1,60 +1,91 @@
 <?php
 session_start();
-include 'db_connection.php';
+include 'db.php';
 
-if (!isset($_SESSION['username'])) {
-    header('Location: login.html');
+// Check if the user is logged in and is the Dean
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Dean') {
+    header("Location: login.php");
     exit();
 }
 
-// Fetch dean's details
-$dean_name = $_SESSION['username'];
-$query = "SELECT * FROM Employee WHERE name='$dean_name'";
-$result = mysqli_query($conn, $query);
-$dean = mysqli_fetch_assoc($result);
-$faculty_id = $dean['faculty_id'];
+$user_id = $_SESSION['user_id'];
+$first_name = $_SESSION['first_name'];
+$last_name = $_SESSION['last_name'];
+$faculty_id = isset($_SESSION['faculty_id']) ? $_SESSION['faculty_id'] : 0; // Set default value
 
-// Fetch departments for the faculty
-$departments_query = "SELECT * FROM Department WHERE faculty_id='$faculty_id'";
-$departments_result = mysqli_query($conn, $departments_query);
+$departments = [];
+$exams = [];
+
+// Fetch departments under the dean's faculty
+$departments_sql = "SELECT department_id, department_name FROM Department WHERE faculty_id = ?";
+$departments_stmt = $conn->prepare($departments_sql);
+if ($departments_stmt === false) {
+    die('Prepare failed: ' . htmlspecialchars($conn->error));
+}
+$departments_stmt->bind_param("i", $faculty_id);
+$departments_stmt->execute();
+$departments_result = $departments_stmt->get_result();
+$departments = $departments_result->fetch_all(MYSQLI_ASSOC);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['department_id'])) {
+    $department_id = $_POST['department_id'];
+
+    // Fetch exams for the selected department
+    $exams_sql = "SELECT exam_name, exam_date, exam_time, course_name 
+                  FROM Exam 
+                  JOIN Courses ON Exam.course_id = Courses.course_id 
+                  WHERE Courses.department_id = ? 
+                  ORDER BY exam_date ASC, exam_time ASC";
+    $exams_stmt = $conn->prepare($exams_sql);
+    if ($exams_stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $exams_stmt->bind_param("i", $department_id);
+    $exams_stmt->execute();
+    $exams_result = $exams_stmt->get_result();
+    $exams = $exams_result->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dean Page</title>
+    <title><?php echo "Welcome, " . $first_name . " " . $last_name; ?></title>
 </head>
 <body>
-    <h2>Welcome, <?php echo $dean_name; ?></h2>
-    <h3>Department Exam Schedules</h3>
-    <form action="view_department_exams.php" method="post">
-        <label for="department">Department:</label>
-        <select id="department" name="department">
-            <?php while ($department = mysqli_fetch_assoc($departments_result)) { ?>
+    <h1>Welcome, <?php echo $first_name . " " . $last_name; ?></h1>
+
+    <h2>Select Department</h2>
+    <form method="post" action="dean.php">
+        <label for="department_id">Department:</label>
+        <select id="department_id" name="department_id" required>
+            <?php foreach ($departments as $department) { ?>
                 <option value="<?php echo $department['department_id']; ?>"><?php echo $department['department_name']; ?></option>
             <?php } ?>
-        </select><br>
-        <input type="submit" value="View Exams">
+        </select>
+        <br>
+        <button type="submit">View Exams</button>
     </form>
 
-    <h3>Exam Schedule</h3>
-    <table border="1">
-        <tr>
-            <th>Exam Date</th>
-            <th>Exam Time</th>
-            <th>Exam Name</th>
-        </tr>
-        <?php
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $department_id = $_POST['department'];
-            $exams_query = "SELECT * FROM Exam WHERE course_id IN (SELECT course_id FROM Courses WHERE department_id='$department_id') ORDER BY exam_date, exam_time";
-            $exams_result = mysqli_query($conn, $exams_query);
-            while ($exam = mysqli_fetch_assoc($exams_result)) {
-                echo "<tr><td>{$exam['exam_date']}</td><td>{$exam['exam_time']}</td><td>{$exam['exam_name']}</td></tr>";
-            }
-        }
-        ?>
-    </table>
+    <?php if (!empty($exams)) { ?>
+        <h2>Exam Schedule</h2>
+        <table border="1">
+            <tr>
+                <th>Exam Name</th>
+                <th>Exam Date</th>
+                <th>Exam Time</th>
+                <th>Course Name</th>
+            </tr>
+            <?php foreach ($exams as $exam) { ?>
+                <tr>
+                    <td><?php echo $exam['exam_name']; ?></td>
+                    <td><?php echo $exam['exam_date']; ?></td>
+                    <td><?php echo $exam['exam_time']; ?></td>
+                    <td><?php echo $exam['course_name']; ?></td>
+                </tr>
+            <?php } ?>
+        </table>
+    <?php } ?>
 </body>
 </html>

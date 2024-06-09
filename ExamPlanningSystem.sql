@@ -72,6 +72,7 @@ INSERT INTO Department (department_name, faculty_id) VALUES
 INSERT INTO Employee (first_name, last_name, username, password, role, department_id) VALUES 
 ('Gina', 'Linetti', 'parisOfPeople', 'beyonce', 'Assistant', 1),
 ('Charles', 'Boyle', 'chichi', 'motherDough', 'Assistant', 1),
+('Norman', 'Scully', 'normSkull', 'foodie', 'Secretary', 2),
 ('Amy', 'Santiago', 'ames', 'bindersAreCool', 'Head of Secretary', 1),
 ('Jacob', 'Peralta', 'JMcClane', 'NakatomiPlaza!84', 'Head of Department', 1),
 ('Terry', 'Jeffords', 'terBear', 'yogurt', 'Head of Department', 2),
@@ -94,3 +95,6 @@ INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUE
 (5, 'LIT200 Final', '2024-05-25', '11:00:00', 3),
 (6, 'SOC305 Final', '2024-06-01', '13:00:00', 1),
 (7, 'ANT210 Midterm', '2024-04-18', '15:00:00', 2);
+
+
+ALTER TABLE Employee ADD COLUMN score INT DEFAULT 0;
