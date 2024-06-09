@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $username = $_POST['username'];
         $password = $_POST['password'];
 
+        // First query to validate the user
         $sql = "SELECT * FROM Employee WHERE username = ? AND password = ? LIMIT 1";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ss", $username, $password);
@@ -24,8 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['role'] = $user['role'];
             $_SESSION['first_name'] = $user['first_name'];
             $_SESSION['last_name'] = $user['last_name'];
-            $_SESSION['department_id'] = $user['department_id']; // Add this line
+            $_SESSION['department_id'] = $user['department_id'];
 
+            // Second query to get the faculty_id
+            $department_id = $user['department_id'];
+            $faculty_sql = "SELECT faculty_id FROM Department WHERE department_id = ? LIMIT 1";
+            $faculty_stmt = $conn->prepare($faculty_sql);
+            $faculty_stmt->bind_param("i", $department_id);
+            $faculty_stmt->execute();
+            $faculty_result = $faculty_stmt->get_result();
+            $faculty = $faculty_result->fetch_assoc();
+
+            if ($faculty) {
+                $_SESSION['faculty_id'] = $faculty['faculty_id'];
+            } else {
+                // Handle case where faculty_id is not found (optional)
+                $_SESSION['faculty_id'] = null;
+            }
+
+            // Redirect user based on their role
             switch ($user['role']) {
                 case 'Assistant':
                     header("Location: assistant.php");

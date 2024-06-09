@@ -193,3 +193,4 @@ $assistant_scores = $scores_result->fetch_all(MYSQLI_ASSOC);
     </table>
 </body>
 </html>
+
