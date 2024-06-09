@@ -68,36 +68,63 @@ if (isset($_POST['schedule_exam'])) {
     $num_classes = $_POST['num_classes'];
     $selected_assistants = $_POST['assistants'];
 
-    $insert_exam_sql = "INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUES (?, ?, ?, ?, ?)";
-    $insert_exam_stmt = $conn->prepare($insert_exam_sql);
-    if ($insert_exam_stmt === false) {
-        die('Prepare failed: ' . htmlspecialchars($conn->error));
-    }
-    $insert_exam_stmt->bind_param("isssi", $course_id, $exam_name, $exam_date, $exam_time, $num_classes);
-    $insert_exam_stmt->execute();
-    $exam_id = $conn->insert_id;
-
+    // Check for intersecting courses for selected assistants
+    $intersecting_assistants = [];
     foreach ($selected_assistants as $assistant_id) {
-        $assign_assistant_sql = "INSERT INTO ExamAssistants (exam_id, assistant_id) VALUES (?, ?)";
-        $assign_assistant_stmt = $conn->prepare($assign_assistant_sql);
-        if ($assign_assistant_stmt === false) {
+        $intersect_sql = "
+            SELECT course_id FROM AssistantCourses 
+            WHERE employee_id = ? AND course_id IN (
+                SELECT course_id FROM Courses 
+                WHERE course_day = (SELECT DAYNAME(?) FROM dual) 
+                AND course_time = ?
+            )
+        ";
+        $intersect_stmt = $conn->prepare($intersect_sql);
+        if ($intersect_stmt === false) {
             die('Prepare failed: ' . htmlspecialchars($conn->error));
         }
-        $assign_assistant_stmt->bind_param("ii", $exam_id, $assistant_id);
-        $assign_assistant_stmt->execute();
-
-        // Update assistant's score
-        $update_score_sql = "UPDATE Employee SET score = score + 1 WHERE employee_id = ?";
-        $update_score_stmt = $conn->prepare($update_score_sql);
-        if ($update_score_stmt === false) {
-            die('Prepare failed: ' . htmlspecialchars($conn->error));
+        $intersect_stmt->bind_param("iss", $assistant_id, $exam_date, $exam_time);
+        $intersect_stmt->execute();
+        $intersect_result = $intersect_stmt->get_result();
+        if ($intersect_result->num_rows > 0) {
+            $intersecting_assistants[] = $assistant_id;
         }
-        $update_score_stmt->bind_param("i", $assistant_id);
-        $update_score_stmt->execute();
     }
 
-    header("Location: secretary_page.php");
-    exit();
+    if (empty($intersecting_assistants)) {
+        $insert_exam_sql = "INSERT INTO Exam (course_id, exam_name, exam_date, exam_time, num_classes) VALUES (?, ?, ?, ?, ?)";
+        $insert_exam_stmt = $conn->prepare($insert_exam_sql);
+        if ($insert_exam_stmt === false) {
+            die('Prepare failed: ' . htmlspecialchars($conn->error));
+        }
+        $insert_exam_stmt->bind_param("isssi", $course_id, $exam_name, $exam_date, $exam_time, $num_classes);
+        $insert_exam_stmt->execute();
+        $exam_id = $conn->insert_id;
+
+        foreach ($selected_assistants as $assistant_id) {
+            $assign_assistant_sql = "INSERT INTO ExamAssistants (exam_id, assistant_id) VALUES (?, ?)";
+            $assign_assistant_stmt = $conn->prepare($assign_assistant_sql);
+            if ($assign_assistant_stmt === false) {
+                die('Prepare failed: ' . htmlspecialchars($conn->error));
+            }
+            $assign_assistant_stmt->bind_param("ii", $exam_id, $assistant_id);
+            $assign_assistant_stmt->execute();
+
+            // Update assistant's score
+            $update_score_sql = "UPDATE Employee SET score = score + 1 WHERE employee_id = ?";
+            $update_score_stmt = $conn->prepare($update_score_sql);
+            if ($update_score_stmt === false) {
+                die('Prepare failed: ' . htmlspecialchars($conn->error));
+            }
+            $update_score_stmt->bind_param("i", $assistant_id);
+            $update_score_stmt->execute();
+        }
+
+        header("Location: secretary_page.php");
+        exit();
+    } else {
+        echo "Error: Selected assistants have intersecting courses.";
+    }
 }
 
 // Fetch assistant scores

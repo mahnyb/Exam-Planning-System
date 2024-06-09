@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login</title>
 </head>
 <body>
-    <h1>Welcome to the Exam Planning System</h1>
+    <h1>Welcome to the Exam Planning System ◝(ᵔᵕᵔ)◜</h1>
     <h5>By Mahny Barazandehtar - 20210702004</h5>
     <h2>Login</h2>
     <?php if (isset($error)) { echo "<p style='color:red;'>$error</p>"; } ?>

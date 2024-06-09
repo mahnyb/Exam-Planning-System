@@ -1,7 +1,0 @@
-('Gina', 'Linetti', 'parisOfPeople', 'beyonce', 'Assistant', 1),
-('Charles', 'Boyle', 'chichi', 'motherDough', 'Assistant', 1),
-('Norman', 'Scully', 'normSkull', 'foodie', 'Secretary', 2),
-('Amy', 'Santiago', 'ames', 'bindersAreCool', 'Head of Secretary', 1),
-('Jacob', 'Peralta', 'JMcClane', 'NakatomiPlaza!84', 'Head of Department', 1),
-('Terry', 'Jeffords', 'terBear', 'yogurt', 'Head of Department', 2),
-('Raymond', 'Holt', 'rayHolt', 'password123', 'Dean', 1);
