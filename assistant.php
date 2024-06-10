@@ -22,30 +22,30 @@ $courses_stmt->bind_param("i", $user_id);
 $courses_stmt->execute();
 $courses_result = $courses_stmt->get_result();
 
-// Fetch the assistant's weekly program (courses and exams)
-$weekly_program_sql = "
+// Fetch the assistant's exams and courses
+$exams_sql = "
 SELECT 
-    c.course_name, 
-    c.course_day,
-    c.course_time,
     e.exam_name, 
     e.exam_date, 
-    e.exam_time 
+    e.exam_time,
+    c.course_name, 
+    c.course_day,
+    c.course_time
 FROM 
-    Courses c 
-    LEFT JOIN Exam e ON c.course_id = e.course_id 
-    LEFT JOIN Employee em ON em.department_id = c.department_id 
+    Exam e
+    INNER JOIN ExamAssistants ea ON ea.exam_id = e.exam_id 
+    INNER JOIN Courses c ON e.course_id = c.course_id
 WHERE 
-    em.employee_id = ?
+    ea.assistant_id = ?
 ";
-$weekly_program_stmt = $conn->prepare($weekly_program_sql);
-if ($weekly_program_stmt === false) {
+$exams_stmt = $conn->prepare($exams_sql);
+if ($exams_stmt === false) {
     die('Prepare failed: ' . htmlspecialchars($conn->error));
 }
-$weekly_program_stmt->bind_param("i", $user_id);
-$weekly_program_stmt->execute();
-$weekly_program_result = $weekly_program_stmt->get_result();
-$weekly_program = $weekly_program_result->fetch_all(MYSQLI_ASSOC);
+$exams_stmt->bind_param("i", $user_id);
+$exams_stmt->execute();
+$exams_result = $exams_stmt->get_result();
+$exams = $exams_result->fetch_all(MYSQLI_ASSOC);
 
 // Process course selection update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_courses'])) {
@@ -64,35 +64,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_courses'])) {
     exit();
 }
 
-// Helper function to generate a weekly schedule table
-function generate_schedule_table($weekly_program) {
-    $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    $timeslots = ['08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00', '16:00-18:00'];
-    
+// Function to generate a table for exams and courses
+function generate_exams_courses_table($exams) {
     echo "<table border='1'>";
-    echo "<tr><th>Timeslot</th>";
-    foreach ($days as $day) {
-        echo "<th>$day</th>";
-    }
-    echo "</tr>";
+    echo "<tr><th>Course Name</th><th>Day of Week</th><th>Course Time</th><th>Exam Name</th><th>Exam Date</th><th>Exam Time</th></tr>";
 
-    foreach ($timeslots as $timeslot) {
-        echo "<tr><td>$timeslot</td>";
-        foreach ($days as $day) {
-            $found = false;
-            foreach ($weekly_program as $event) {
-                if ($event['course_day'] == $day && $event['course_time'] == $timeslot) {
-                    echo "<td>{$event['course_name']}<br>{$event['exam_name']}<br>{$event['exam_date']} {$event['exam_time']}</td>";
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                echo "<td></td>";
-            }
-        }
+    foreach ($exams as $exam) {
+        echo "<tr>";
+        echo "<td>" . htmlspecialchars($exam['course_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($exam['course_day']) . "</td>";
+        echo "<td>" . htmlspecialchars($exam['course_time']) . "</td>";
+        echo "<td>" . htmlspecialchars($exam['exam_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($exam['exam_date']) . "</td>";
+        echo "<td>" . htmlspecialchars($exam['exam_time']) . "</td>";
         echo "</tr>";
     }
+
     echo "</table>";
 }
 ?>
@@ -101,27 +88,27 @@ function generate_schedule_table($weekly_program) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome, <?php echo "$first_name $last_name"; ?></title>
+    <title>Welcome, <?php echo htmlspecialchars("$first_name $last_name"); ?></title>
 </head>
 <body>
-    <h1>Welcome, <?php echo "$first_name $last_name"; ?></h1>
+    <h1>Welcome, <?php echo htmlspecialchars("$first_name $last_name"); ?></h1>
     
     <h2>Select Courses</h2>
     <form action="assistant.php" method="post">
         <label for="course_selection">Select Courses:</label>
         <select id="course_selection" name="course_selection[]" multiple>
             <?php while ($course = $courses_result->fetch_assoc()) { ?>
-                <option value="<?php echo $course['course_id']; ?>"><?php echo $course['course_name']; ?></option>
+                <option value="<?php echo htmlspecialchars($course['course_id']); ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
             <?php } ?>
         </select>
         <br>
         <button type="submit" name="update_courses">Update Courses</button>
     </form>
 
-    <h2>Your Weekly Program</h2>
+    <h2>Your Exams and Courses</h2>
     <form action="assistant.php" method="post">
         <button type="submit" name="refresh">Refresh Table</button>
     </form>
-    <?php generate_schedule_table($weekly_program); ?>
+    <?php generate_exams_courses_table($exams); ?>
 </body>
 </html>

@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($faculty) {
                 $_SESSION['faculty_id'] = $faculty['faculty_id'];
             } else {
-                // Handle case where faculty_id is not found (optional)
+                // Handle case where faculty_id is not found 
                 $_SESSION['faculty_id'] = null;
             }
 

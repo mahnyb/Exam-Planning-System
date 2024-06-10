@@ -5,7 +5,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $new_password = $_POST['new_password'];
 
-    // Debugging: Output the received username and new password
     error_log("Username: $username");
     error_log("New Password: $new_password");
 
